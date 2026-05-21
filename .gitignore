@@ -1,0 +1,29 @@
+# Build artifacts
+*.o
+*.a
+*.so
+*.exe
+*.dll
+rpal20
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Test output
+*.out
+*.tmp
+*.log
+output.*
+
+# Reference materials
+rpal/
+*.pdf
+
+# Documentation drafts (PDF + extra Markdown).
+*.md
+!readme.md
