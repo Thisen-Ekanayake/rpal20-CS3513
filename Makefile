@@ -6,7 +6,7 @@
 ## Run:      ./rpal20 <source-file>
 
 CXX       := g++
-CXXFLAGS  := -std=c++17 -O2 -Wall -Wextra -Wno-unused-parameter
+CXXFLAGS  := -std=c++17 -O2 -Wall -Wextra
 LDFLAGS   :=
 
 TARGET    := rpal20

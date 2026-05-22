@@ -132,31 +132,11 @@ void CSEMachine::flattenInto(TreeNode* node, int structIdx) {
         return;
     }
 
-    if (lab == "<Y*>") {
-        CtrlItem y;  y.kind = CtrlItem::YSTAR_;
-        ctrlStructs_[structIdx].push_back(y);
-        return;
-    }
-    if (lab == "<true>") {
-        CtrlItem t;  t.kind = CtrlItem::TRUE_;
-        ctrlStructs_[structIdx].push_back(t);
-        return;
-    }
-    if (lab == "<false>") {
-        CtrlItem t;  t.kind = CtrlItem::FALSE_;
-        ctrlStructs_[structIdx].push_back(t);
-        return;
-    }
-    if (lab == "<nil>") {
-        CtrlItem n;  n.kind = CtrlItem::NIL_;
-        ctrlStructs_[structIdx].push_back(n);
-        return;
-    }
-    if (lab == "<dummy>") {
-        CtrlItem d;  d.kind = CtrlItem::DUMMY_;
-        ctrlStructs_[structIdx].push_back(d);
-        return;
-    }
+    if (lab == "<Y*>")    { CtrlItem i; i.kind = CtrlItem::YSTAR_;  ctrlStructs_[structIdx].push_back(i); return; }
+    if (lab == "<true>")  { CtrlItem i; i.kind = CtrlItem::TRUE_;   ctrlStructs_[structIdx].push_back(i); return; }
+    if (lab == "<false>") { CtrlItem i; i.kind = CtrlItem::FALSE_;  ctrlStructs_[structIdx].push_back(i); return; }
+    if (lab == "<nil>")   { CtrlItem i; i.kind = CtrlItem::NIL_;    ctrlStructs_[structIdx].push_back(i); return; }
+    if (lab == "<dummy>") { CtrlItem i; i.kind = CtrlItem::DUMMY_;  ctrlStructs_[structIdx].push_back(i); return; }
 
     if (lab.rfind("<ID:", 0) == 0) {
         CtrlItem item;
@@ -363,7 +343,7 @@ void CSEMachine::applyGamma() {
     if (stack_.size() < 2) {
         throw std::runtime_error("gamma: stack underflow");
     }
-    Value rand  = stack_.back();  stack_.pop_back();
+    Value arg   = stack_.back();  stack_.pop_back();
     Value rator = stack_.back();  stack_.pop_back();
 
     switch (rator.kind) {
@@ -373,18 +353,18 @@ void CSEMachine::applyGamma() {
             if (rator.isEmptyBind) {
                 // Nothing to bind.  The argument is simply discarded; this
                 // form mirrors rpal.exe's behaviour for `fn (). E`.
-                (void)rand;
+                (void)arg;
             } else if (rator.isCommaBind) {
-                if (rand.kind != Value::TUPLE_ ||
-                    rand.tupleVal.size() != rator.bindVars.size()) {
+                if (arg.kind != Value::TUPLE_ ||
+                    arg.tupleVal.size() != rator.bindVars.size()) {
                     throw std::runtime_error(
                         "lambda destructure: tuple shape mismatch");
                 }
                 for (std::size_t i = 0; i < rator.bindVars.size(); ++i) {
-                    e->bindings[rator.bindVars[i]] = rand.tupleVal[i];
+                    e->bindings[rator.bindVars[i]] = arg.tupleVal[i];
                 }
             } else {
-                e->bindings[rator.bindVars[0]] = rand;
+                e->bindings[rator.bindVars[0]] = arg;
             }
             envStack_.push_back(e);
 
@@ -405,10 +385,10 @@ void CSEMachine::applyGamma() {
         }
         case Value::YSTAR_: {
             // Y* applied to a lambda -> eta closure.
-            if (rand.kind != Value::LAMBDA_CL) {
+            if (arg.kind != Value::LAMBDA_CL) {
                 throw std::runtime_error("Y*: expected a lambda argument");
             }
-            Value eta = rand;
+            Value eta = arg;
             eta.kind  = Value::ETA;
             stack_.push_back(eta);
             break;
@@ -428,7 +408,7 @@ void CSEMachine::applyGamma() {
 
             CtrlItem gam2; gam2.kind = CtrlItem::GAMMA;
             CtrlItem pushArg;  pushArg.kind = CtrlItem::LITERAL_VALUE;
-            pushArg.lit = rand;
+            pushArg.lit = arg;
             CtrlItem gam1; gam1.kind = CtrlItem::GAMMA;
 
             control_.insert(control_.begin(), gam2);
@@ -437,11 +417,11 @@ void CSEMachine::applyGamma() {
             break;
         }
         case Value::TUPLE_: {
-            // Tuple indexing: rand is an integer (1-based) per RPAL.
-            if (rand.kind != Value::INT_) {
+            // Tuple indexing: arg is an integer (1-based) per RPAL.
+            if (arg.kind != Value::INT_) {
                 throw std::runtime_error("Tuple index: integer expected");
             }
-            long i = rand.intVal;
+            long i = arg.intVal;
             if (i < 1 || static_cast<std::size_t>(i) > rator.tupleVal.size()) {
                 throw std::runtime_error("Tuple index out of range");
             }
@@ -449,7 +429,7 @@ void CSEMachine::applyGamma() {
             break;
         }
         case Value::BUILTIN: {
-            applyBuiltin(rator, rand);
+            applyBuiltin(rator, arg);
             break;
         }
         default:
@@ -559,7 +539,7 @@ void CSEMachine::applyBuiltin(const Value& fn, const Value& arg) {
     Value out;
 
     if (name == "Print" || name == "print") {
-        printValue(arg, false);
+        printValue(arg);
         out.kind = Value::DUMMY_;
     }
     else if (name == "Conc") {
@@ -644,7 +624,7 @@ void CSEMachine::applyBuiltin(const Value& fn, const Value& arg) {
 
 // ---------------- printing ----------------
 
-void CSEMachine::printValue(const Value& v, bool inTuple) {
+void CSEMachine::printValue(const Value& v) {
     switch (v.kind) {
         case Value::INT_:
             std::printf("%ld", v.intVal);
@@ -667,7 +647,7 @@ void CSEMachine::printValue(const Value& v, bool inTuple) {
                 std::printf("(");
                 for (std::size_t i = 0; i < v.tupleVal.size(); ++i) {
                     if (i) std::printf(", ");
-                    printValue(v.tupleVal[i], true);
+                    printValue(v.tupleVal[i]);
                 }
                 std::printf(")");
             }
@@ -698,5 +678,4 @@ void CSEMachine::printValue(const Value& v, bool inTuple) {
             std::printf("%s", v.builtinName.c_str());
             break;
     }
-    (void)inTuple;
 }

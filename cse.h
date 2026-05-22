@@ -90,7 +90,7 @@ private:
     Value  lookupName(const std::string& name);
     Environment* newEnv(Environment* parent);
     void   pushBuiltin(Environment* env, const std::string& name);
-    void   printValue(const Value& v, bool inTuple);
+    void   printValue(const Value& v);
     static bool isBinaryOpLabel(const std::string& l);
     static bool isUnaryOpLabel(const std::string& l);
 };
