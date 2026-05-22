@@ -1,7 +1,6 @@
 // lexer.cpp -- implementation of the RPAL lexer following RPAL_Lex.pdf.
 #include "lexer.h"
 
-#include <cctype>
 #include <stdexcept>
 #include <unordered_set>
 
